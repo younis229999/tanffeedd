@@ -1,0 +1,17 @@
+# مخرجات وبناء
+build/
+dist/
+*.spec.bak
+__pycache__/
+*.pyc
+
+# سجلات ومخرجات الاختبارات
+logs/
+tests/_out/
+
+# نسخ احتياطية للإعدادات
+config/backups/
+
+# ملفات النظام
+.DS_Store
+Thumbs.db

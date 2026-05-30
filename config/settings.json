@@ -1,0 +1,19 @@
+{
+  "directorate_name": "مديرية تنفيذ كركوك",
+  "section_name": "شعبة الحاسبة",
+  "programmer_name": "@Younis shaker",
+  "columns": {
+    "folder": "A",
+    "amount": "E",
+    "name": "H",
+    "iban": "I"
+  },
+  "has_header": true,
+  "thresholds": {
+    "amount_max": 10000000,
+    "iban_length": 23
+  },
+  "iban_country_prefix": "IQ",
+  "iban_mod97_check": false,
+  "cancelled_ibans": []
+}
