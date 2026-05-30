@@ -11,6 +11,8 @@ on:
 jobs:
   build:
     runs-on: windows-latest   # حاسبة ويندوز افتراضية مجانية من GitHub.
+    permissions:
+      contents: write         # مطلوبة لإنشاء صفحة الإصدار (Release) ورفع الـ exe.
     steps:
       - name: جلب الكود
         uses: actions/checkout@v4
