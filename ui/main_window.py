@@ -30,6 +30,7 @@ from core.logger import get_logger
 from core.processor import process_loaded
 from core.settings import Settings
 from ui.results_view import ResultsView
+from ui.search_view import SearchView
 from ui.settings_dialog import SettingsDialog
 from ui.theme import C, make_card
 
@@ -45,8 +46,8 @@ class MainWindow(QWidget):
 
         self.setWindowTitle("معالج ملفات التوطين — مديرية تنفيذ كركوك")
         self.setObjectName("root")
-        self.resize(1180, 770)
-        self.setMinimumSize(960, 640)
+        self.resize(1200, 820)
+        self.setMinimumSize(980, 680)
 
         self._build_ui()
 
@@ -66,6 +67,10 @@ class MainWindow(QWidget):
         self.results_view = ResultsView(self.settings)
         self.results_view.back_requested.connect(lambda: self.stack.setCurrentIndex(0))
         self.stack.addWidget(self.results_view)             # index 1
+
+        self.search_view = SearchView(self.settings)
+        self.search_view.back_requested.connect(lambda: self.stack.setCurrentIndex(0))
+        self.stack.addWidget(self.search_view)              # index 2
 
         root.addWidget(self._build_footer())
 
@@ -98,11 +103,16 @@ class MainWindow(QWidget):
         self.btn_open.setObjectName("ghost")
         self.btn_open.setCursor(Qt.PointingHandCursor)
         self.btn_open.clicked.connect(self.on_open)
+        self.btn_search = QPushButton("🔎  الكشف والبحث")
+        self.btn_search.setObjectName("ghost")
+        self.btn_search.setCursor(Qt.PointingHandCursor)
+        self.btn_search.clicked.connect(self.on_open_search)
         self.btn_settings = QPushButton("⚙  الإعدادات")
         self.btn_settings.setObjectName("ghost")
         self.btn_settings.setCursor(Qt.PointingHandCursor)
         self.btn_settings.clicked.connect(self.on_settings)
         lay.addWidget(self.btn_open)
+        lay.addWidget(self.btn_search)
         lay.addWidget(self.btn_settings)
         return card
 
@@ -220,6 +230,12 @@ class MainWindow(QWidget):
             "اكتملت المعالجة: أصلية=%d بعد الدمج=%d تنبيهات=%d",
             s.original_count, s.merged_count, s.alerts_count,
         )
+
+    def on_open_search(self) -> None:
+        # إعادة تحميل المخزن (في حال تغيّر الملف) ثم عرض شاشة الكشف.
+        self.search_view.store.load()
+        self.search_view._refresh_status()
+        self.stack.setCurrentIndex(2)
 
     def on_settings(self) -> None:
         dlg = SettingsDialog(self.settings, self)

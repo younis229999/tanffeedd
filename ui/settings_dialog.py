@@ -139,13 +139,16 @@ class SettingsDialog(QDialog):
         self.ed_col_amount = QLineEdit()
         self.ed_col_name = QLineEdit()
         self.ed_col_iban = QLineEdit()
-        for ed in (self.ed_col_folder, self.ed_col_amount, self.ed_col_name, self.ed_col_iban):
+        self.ed_col_date = QLineEdit()
+        for ed in (self.ed_col_folder, self.ed_col_amount, self.ed_col_name,
+                   self.ed_col_iban, self.ed_col_date):
             ed.setMaxLength(3)
             ed.setFixedWidth(80)
         form.addRow("عمود رقم الإضبارة:", self.ed_col_folder)
         form.addRow("عمود المبلغ:", self.ed_col_amount)
         form.addRow("عمود الاسم:", self.ed_col_name)
         form.addRow("عمود الآيبان:", self.ed_col_iban)
+        form.addRow("عمود التاريخ (للكشف):", self.ed_col_date)
         form.addRow(QLabel("استخدم حروف الأعمدة كما في Excel (مثل A أو E)."))
         return w
 
@@ -169,6 +172,7 @@ class SettingsDialog(QDialog):
         self.ed_col_amount.setText(cols.get("amount", "E"))
         self.ed_col_name.setText(cols.get("name", "H"))
         self.ed_col_iban.setText(cols.get("iban", "I"))
+        self.ed_col_date.setText(cols.get("date", "B"))
 
     def on_add_iban(self) -> None:
         iban = self.ed_new_iban.text().strip()
@@ -250,6 +254,7 @@ class SettingsDialog(QDialog):
             "amount": self.ed_col_amount.text().strip().upper() or "E",
             "name": self.ed_col_name.text().strip().upper() or "H",
             "iban": self.ed_col_iban.text().strip().upper() or "I",
+            "date": self.ed_col_date.text().strip().upper() or "B",
         }
         s.data["columns"] = cols
 

@@ -23,6 +23,45 @@ _SUFFIX_JOIN = {
 }
 
 
+# تشكيل وتطويل لإزالتها عند التطبيع.
+_TASHKEEL = re.compile(r"[ً-ْٰـ]")
+
+
+def normalize_ar(text: str) -> str:
+    """
+    تطبيع نص عربي للبحث الذكي:
+    - إزالة التشكيل والتطويل.
+    - توحيد الألف (أ إ آ ٱ → ا)، والتاء المربوطة (ة → ه)،
+      والألف المقصورة (ى → ي)، والهمزات (ؤ ئ).
+    - توحيد المسافات.
+    """
+    if not text:
+        return ""
+    t = str(text)
+    t = _TASHKEEL.sub("", t)
+    for a, b in (("أ", "ا"), ("إ", "ا"), ("آ", "ا"), ("ٱ", "ا"),
+                 ("ة", "ه"), ("ى", "ي"), ("ئ", "ي"), ("ؤ", "و")):
+        t = t.replace(a, b)
+    return re.sub(r"\s+", " ", t).strip()
+
+
+def name_matches(query: str, name: str) -> bool:
+    """
+    مطابقة ذكية لاسم: كل كلمة في البحث يجب أن ترد في الاسم (بأي ترتيب)،
+    مع تجاهل الفروق في المسافات والأحرف (عبد الرحمن = عبدالرحمن، خولة = خوله).
+    """
+    nq = normalize_ar(query)
+    if not nq:
+        return False
+    nn = normalize_ar(name)
+    nn_nospace = nn.replace(" ", "")
+    for token in nq.split():
+        if token in nn or token in nn_nospace:
+            continue
+        return False
+    return True
+
+
 def shorten_name(name: str, max_units: int = 3) -> str:
     """
     إرجاع الاسم مقتصراً على أول ``max_units`` أجزاء (افتراضياً ثلاثي)،

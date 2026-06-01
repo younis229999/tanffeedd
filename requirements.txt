@@ -10,5 +10,8 @@ reportlab>=4.0.0
 arabic-reshaper>=3.0.0
 python-bidi>=0.4.2
 
+# عرض/طباعة ملفات PDF (للطباعة المباشرة للكشف)
+pymupdf>=1.23.0
+
 # التغليف النهائي إلى ملف exe (للتطوير فقط)
 pyinstaller>=6.0.0

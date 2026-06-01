@@ -6,7 +6,8 @@
     "folder": "A",
     "amount": "E",
     "name": "H",
-    "iban": "I"
+    "iban": "I",
+    "date": "B"
   },
   "has_header": true,
   "process_folders": true,

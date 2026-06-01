@@ -82,9 +82,17 @@ def ar(text: object) -> str:
 
 
 def _fmt_amount(value: float) -> str:
-    """تنسيق المبلغ بدون فواصل آلاف وبلا كسور."""
+    """تنسيق المبلغ بدون فواصل آلاف وبلا كسور (لتقرير دمج المكررات)."""
     try:
         return f"{int(round(float(value)))}"
+    except (TypeError, ValueError):
+        return str(value)
+
+
+def _fmt_amount_sep(value: float) -> str:
+    """تنسيق المبلغ بفواصل آلاف (لكشف الحساب)."""
+    try:
+        return f"{int(round(float(value))):,}"
     except (TypeError, ValueError):
         return str(value)
 
@@ -271,3 +279,115 @@ def build_report_filename(directory: str, prefix: str = "localization_report") -
     """توليد اسم ملف تقرير يتضمن التاريخ والوقت."""
     stamp = datetime.now().strftime("%Y-%m-%d_%H%M%S")
     return str(Path(directory) / f"{prefix}_{stamp}.pdf")
+
+
+def generate_statement_pdf(
+    person,
+    out_path: str,
+    directorate_name: str,
+    footer_lines: List[str],
+    until_label: str = "",
+    until_key: Optional[int] = None,
+) -> str:
+    """
+    توليد كشف حساب لشخص واحد بتنسيق A4 أنيق.
+
+    يعرض: الاسم الكامل + الآيبان + رقم الإضبارة، جدول (التاريخ | المبلغ)،
+    ثم المجموع لغاية التاريخ المحدد وعدد مرات الاستلام.
+    """
+    ensure_font()
+    st = _styles()
+    Path(out_path).parent.mkdir(parents=True, exist_ok=True)
+
+    doc = _ReportDoc(
+        out_path, footer_lines=footer_lines, pagesize=A4,
+        rightMargin=18 * mm, leftMargin=18 * mm,
+        topMargin=18 * mm, bottomMargin=24 * mm,
+        title="كشف حساب",
+    )
+
+    flow = []
+    flow.append(Paragraph(ar(directorate_name), st["title"]))
+    flow.append(Paragraph(ar("كشف حساب المستفيد"), st["subtitle"]))
+    flow.append(Paragraph(ar(datetime.now().strftime("%Y-%m-%d")), st["date"]))
+    flow.append(Spacer(1, 4 * mm))
+
+    # بطاقة معلومات الشخص (رقم الإضبارة يظهر لكل عملية في الجدول).
+    info = [
+        [Paragraph(ar(person.name), st["item"]), Paragraph(ar("الاسم:"), st["card_label"])],
+        [Paragraph(ar(person.iban or "—"), st["item"]), Paragraph(ar("الآيبان:"), st["card_label"])],
+    ]
+    info_tbl = Table(info, colWidths=[120 * mm, 40 * mm])
+    info_tbl.setStyle(TableStyle([
+        ("BACKGROUND", (0, 0), (-1, -1), colors.HexColor("#F7F9FC")),
+        ("BOX", (0, 0), (-1, -1), 0.6, colors.HexColor("#E5EAF1")),
+        ("INNERGRID", (0, 0), (-1, -1), 0.4, colors.HexColor("#E5EAF1")),
+        ("VALIGN", (0, 0), (-1, -1), "MIDDLE"),
+        ("TOPPADDING", (0, 0), (-1, -1), 7),
+        ("BOTTOMPADDING", (0, 0), (-1, -1), 7),
+        ("RIGHTPADDING", (0, 0), (-1, -1), 10),
+    ]))
+    flow.append(info_tbl)
+    flow.append(Spacer(1, 6 * mm))
+
+    flow.append(Paragraph(ar("سجل عمليات الاستلام"), st["section"]))
+    flow.append(HRFlowable(width="100%", thickness=1.2,
+                           color=colors.HexColor("#1F4E78"), spaceBefore=1, spaceAfter=4))
+
+    # جدول العمليات (تنازلي): رقم الإضبارة | المبلغ (بفواصل) | التاريخ | #
+    cell_h = ParagraphStyle("ch", fontName=_FONT_NAME, fontSize=11, alignment=TA_CENTER,
+                            leading=15, textColor=colors.white)
+    cell = ParagraphStyle("cc", fontName=_FONT_NAME, fontSize=10.5, alignment=TA_CENTER,
+                          leading=14, textColor=colors.HexColor("#1F2937"))
+    data = [[Paragraph(ar("رقم الإضبارة"), cell_h),
+             Paragraph(ar("المبلغ"), cell_h),
+             Paragraph(ar("التاريخ"), cell_h),
+             Paragraph(ar("#"), cell_h)]]
+    # تصفية لغاية التاريخ مع الإبقاء على الترتيب التنازلي (الأحدث أولاً).
+    rows = [e for e in person.entries
+            if until_key is None or not e.date_key or e.date_key <= until_key]
+    total = 0.0
+    for n, e in enumerate(rows, start=1):
+        total += e.amount
+        data.append([Paragraph(ar(e.folder or "—"), cell),
+                     Paragraph(ar(_fmt_amount_sep(e.amount)), cell),
+                     Paragraph(ar(e.date_fmt or "—"), cell),
+                     Paragraph(ar(str(n)), cell)])
+    n = len(rows)
+
+    tbl = Table(data, colWidths=[45 * mm, 55 * mm, 45 * mm, 15 * mm], repeatRows=1)
+    style = [
+        ("BACKGROUND", (0, 0), (-1, 0), colors.HexColor("#1F4E78")),
+        ("GRID", (0, 0), (-1, -1), 0.4, colors.HexColor("#DDE4EC")),
+        ("VALIGN", (0, 0), (-1, -1), "MIDDLE"),
+        ("TOPPADDING", (0, 0), (-1, -1), 6),
+        ("BOTTOMPADDING", (0, 0), (-1, -1), 6),
+        ("ROWBACKGROUNDS", (0, 1), (-1, -1), [colors.white, colors.HexColor("#F4F7FB")]),
+    ]
+    tbl.setStyle(TableStyle(style))
+    flow.append(tbl)
+    flow.append(Spacer(1, 5 * mm))
+
+    # صندوق المجموع.
+    label = f"المجموع لغاية {until_label}" if until_label else "المجموع الكلي"
+    summary = [[
+        Paragraph(ar(_fmt_amount_sep(total)),
+                  ParagraphStyle("sv", fontName=_FONT_NAME, fontSize=15, alignment=TA_CENTER,
+                                 leading=20, textColor=colors.HexColor("#16A34A"))),
+        Paragraph(ar(f"{label}  •  عدد مرات الاستلام: {n}"),
+                  ParagraphStyle("sl", fontName=_FONT_NAME, fontSize=12, alignment=TA_RIGHT,
+                                 leading=18, textColor=colors.HexColor("#1F2937"))),
+    ]]
+    sum_tbl = Table(summary, colWidths=[50 * mm, 110 * mm])
+    sum_tbl.setStyle(TableStyle([
+        ("BACKGROUND", (0, 0), (-1, -1), colors.HexColor("#EAF6EE")),
+        ("BOX", (0, 0), (-1, -1), 0.8, colors.HexColor("#16A34A")),
+        ("VALIGN", (0, 0), (-1, -1), "MIDDLE"),
+        ("TOPPADDING", (0, 0), (-1, -1), 10),
+        ("BOTTOMPADDING", (0, 0), (-1, -1), 10),
+        ("RIGHTPADDING", (0, 0), (-1, -1), 12),
+    ]))
+    flow.append(sum_tbl)
+
+    doc.build(flow)
+    return out_path

@@ -29,6 +29,7 @@ DEFAULT_SETTINGS: Dict[str, Any] = {
         "amount": "E",
         "name": "H",
         "iban": "I",
+        "date": "B",     # عمود التاريخ (يُستخدم في ميزة الكشف والبحث).
     },
     "has_header": True,
     # هل يعالج البرنامج عمود رقم الإضبارة (A)؟ إن كان False يُترك كما هو.

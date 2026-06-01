@@ -12,6 +12,9 @@ tests/_out/
 # نسخ احتياطية للإعدادات
 config/backups/
 
+# ملف الكشف المخزّن (بيانات المستخدم)
+data/
+
 # ملفات النظام
 .DS_Store
 Thumbs.db
