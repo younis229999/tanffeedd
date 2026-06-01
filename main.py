@@ -52,7 +52,7 @@ def main() -> int:
     logger.info("بدء تشغيل التطبيق")
 
     app = QApplication(sys.argv)
-    app.setApplicationName("معالج ملفات التوطين")
+    app.setApplicationName("altanfith")
     # اتجاه الواجهة من اليمين لليسار.
     app.setLayoutDirection(Qt.RightToLeft)
     load_fonts(app)

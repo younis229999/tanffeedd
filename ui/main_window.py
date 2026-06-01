@@ -44,7 +44,7 @@ class MainWindow(QWidget):
         self.settings = Settings()
         self.loaded: LoadedData | None = None
 
-        self.setWindowTitle("معالج ملفات التوطين — مديرية تنفيذ كركوك")
+        self.setWindowTitle("altanfith")
         self.setObjectName("root")
         self.resize(1200, 820)
         self.setMinimumSize(980, 680)
@@ -88,7 +88,7 @@ class MainWindow(QWidget):
         # العنوان (يمين في RTL).
         titles = QVBoxLayout()
         titles.setSpacing(2)
-        title = QLabel("معالج ملفات التوطين")
+        title = QLabel("altanfith")
         title.setObjectName("appTitle")
         subtitle = QLabel("تنظيف • تحقق • دمج المكررات • تقرير احترافي")
         subtitle.setObjectName("appSubtitle")

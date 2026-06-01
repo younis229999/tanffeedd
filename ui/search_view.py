@@ -318,7 +318,7 @@ class SearchView(QWidget):
         if not self.current:
             return
         until_lbl = self.date_until.date().toString("yyyy-MM-dd")
-        default = str(Path.home() / f"كشف_{self.current.name}_{until_lbl}.pdf")
+        default = str(Path.home() / f"altanfith_{self.current.name}_{until_lbl}.pdf")
         path, _ = QFileDialog.getSaveFileName(self, "حفظ الكشف PDF", default, "ملف PDF (*.pdf)")
         if not path:
             return

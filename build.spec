@@ -6,7 +6,7 @@
     pip install -r requirements.txt
     pyinstaller build.spec
 
-سيُنتج الملف في مجلد dist/SalaryProcessor.exe ويعمل دون تنصيب Python.
+سيُنتج الملف في مجلد dist/altanfith.exe ويعمل دون تنصيب Python.
 """
 
 block_cipher = None
@@ -49,7 +49,7 @@ exe = EXE(
     a.zipfiles,
     a.datas,
     [],
-    name='SalaryProcessor',
+    name='altanfith',
     debug=False,
     bootloader_ignore_signals=False,
     strip=False,

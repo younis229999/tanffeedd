@@ -34,12 +34,12 @@ jobs:
       - name: رفع الـ exe كأرتيفاكت
         uses: actions/upload-artifact@v4
         with:
-          name: SalaryProcessor-Windows
-          path: dist/SalaryProcessor.exe
+          name: altanfith-Windows
+          path: dist/altanfith.exe
 
       # عند وضع وسم إصدار (مثل v1.0) يُنشئ صفحة Release فيها الـ exe للتنزيل المباشر.
       - name: نشر كإصدار (Release) عند الوسم
         if: startsWith(github.ref, 'refs/tags/v')
         uses: softprops/action-gh-release@v2
         with:
-          files: dist/SalaryProcessor.exe
+          files: dist/altanfith.exe

@@ -225,7 +225,7 @@ def write_output_excel(
     return out_path
 
 
-def build_output_filename(directory: str, prefix: str = "localization_clean") -> str:
+def build_output_filename(directory: str, prefix: str = "altanfith") -> str:
     """توليد اسم ملف ناتج يتضمن التاريخ والوقت."""
     stamp = datetime.now().strftime("%Y-%m-%d_%H%M%S")
     return str(Path(directory) / f"{prefix}_{stamp}.xlsx")

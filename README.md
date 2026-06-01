@@ -36,7 +36,7 @@ pip install -r requirements.txt
 pyinstaller build.spec
 ```
 
-الناتج: `dist/SalaryProcessor.exe` — يعمل دون تنصيب Python.
+الناتج: `dist/altanfith.exe` — يعمل دون تنصيب Python.
 يُحفظ `config/settings.json` بجوار الملف التنفيذي (إعدادات دائمة).
 
 ---

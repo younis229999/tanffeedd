@@ -275,7 +275,7 @@ def generate_report(
     return out_path
 
 
-def build_report_filename(directory: str, prefix: str = "localization_report") -> str:
+def build_report_filename(directory: str, prefix: str = "altanfith_report") -> str:
     """توليد اسم ملف تقرير يتضمن التاريخ والوقت."""
     stamp = datetime.now().strftime("%Y-%m-%d_%H%M%S")
     return str(Path(directory) / f"{prefix}_{stamp}.pdf")
