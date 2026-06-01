@@ -90,6 +90,12 @@ class SettingsDialog(QDialog):
 
         self.chk_header = QCheckBox("الصف الأول في الملف عنوان (يُتخطى)")
         form.addRow("", self.chk_header)
+
+        # هل يريد الموظف تعديل أرقام الأضابير (عمود A)؟
+        self.chk_process_folders = QCheckBox(
+            "تعديل أرقام الأضابير (عمود A) — تنظيف وتفريد وتعبئة الفارغ تلقائياً"
+        )
+        form.addRow("", self.chk_process_folders)
         return w
 
     def _tab_cancelled(self) -> QWidget:
@@ -148,6 +154,7 @@ class SettingsDialog(QDialog):
         self.ed_prefix.setText(s.iban_prefix)
         self.chk_mod97.setChecked(s.iban_mod97_check)
         self.chk_header.setChecked(s.has_header)
+        self.chk_process_folders.setChecked(s.process_folders)
 
         self.list_cancelled.clear()
         self.list_cancelled.addItems(s.cancelled_ibans)
@@ -225,6 +232,7 @@ class SettingsDialog(QDialog):
         s.data["iban_country_prefix"] = self.ed_prefix.text().strip().upper() or "IQ"
         s.data["iban_mod97_check"] = self.chk_mod97.isChecked()
         s.data["has_header"] = self.chk_header.isChecked()
+        s.data["process_folders"] = self.chk_process_folders.isChecked()
 
         s.data["cancelled_ibans"] = [
             self.list_cancelled.item(i).text()

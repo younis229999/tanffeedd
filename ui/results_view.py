@@ -110,18 +110,12 @@ class ResultsView(QWidget):
 
         self.tab_summary = QWidget()
         self.tab_alerts = QTableWidget(0, 5)
-        self.tab_merged = QTableWidget(0, 4)
-        self.tab_changes = QTableWidget(0, 5)
 
         self._init_summary_tab()
         self._init_alerts_tab()
-        self._init_merged_tab()
-        self._init_changes_tab()
 
         self.tabs.addTab(self.tab_summary, "📊  ملخص وإحصائيات")
         self.tabs.addTab(self.tab_alerts, "⚠  التنبيهات")
-        self.tabs.addTab(self.tab_merged, "🔗  النتيجة بعد الدمج")
-        self.tabs.addTab(self.tab_changes, "✎  تغييرات الأضابير")
 
     # ------------------------------ تهيئة التبويبات ------------------------------
     def _init_summary_tab(self) -> None:
@@ -145,25 +139,11 @@ class ResultsView(QWidget):
         )
         _style_table(self.tab_alerts)
 
-    def _init_merged_tab(self) -> None:
-        self.tab_merged.setHorizontalHeaderLabels(
-            ["رقم الإضبارة", "المبلغ", "الاسم", "الآيبان"]
-        )
-        _style_table(self.tab_merged)
-
-    def _init_changes_tab(self) -> None:
-        self.tab_changes.setHorizontalHeaderLabels(
-            ["الصف", "الاسم", "القديم", "الجديد", "السبب"]
-        )
-        _style_table(self.tab_changes)
-
     # -------------------------------- عرض النتيجة --------------------------------
     def show_result(self, result) -> None:
         self.result = result
         self._fill_summary(result)
         self._fill_alerts(result)
-        self._fill_merged(result)
-        self._fill_changes(result)
         self.tabs.setCurrentIndex(0)
 
     def _clear_layout(self, layout) -> None:
@@ -232,41 +212,6 @@ class ResultsView(QWidget):
                 elif c == 1:
                     item.setTextAlignment(Qt.AlignCenter)
                 self.tab_alerts.setItem(r, c, item)
-
-    def _fill_merged(self, result) -> None:
-        rows = result.final_rows
-        self.tab_merged.setRowCount(len(rows))
-        for r, row in enumerate(rows):
-            merged = len(row.get("component_amounts", [])) > 1
-            values = [
-                _ltr(row.get("folder", "")),
-                _fmt(row.get("amount", 0)),
-                row.get("name", ""),
-                _ltr(row.get("iban", "")),
-            ]
-            for c, text in enumerate(values):
-                item = QTableWidgetItem(text)
-                if c in (0, 1):
-                    item.setTextAlignment(Qt.AlignCenter)
-                if merged:
-                    item.setBackground(QColor("#FFF6E5"))
-                self.tab_merged.setItem(r, c, item)
-
-    def _fill_changes(self, result) -> None:
-        changes = result.folder_changes
-        self.tab_changes.setRowCount(len(changes))
-        self.tab_changes.setColumnWidth(0, 60)
-        for r, ch in enumerate(changes):
-            dup = "فك تكرار" in ch.reason
-            values = [str(ch.row_index), ch.name,
-                      _ltr(ch.old_value), _ltr(ch.new_value), ch.reason]
-            for c, text in enumerate(values):
-                item = QTableWidgetItem(text)
-                if c == 0:
-                    item.setTextAlignment(Qt.AlignCenter)
-                if dup:
-                    item.setBackground(QColor("#FDECEA"))
-                self.tab_changes.setItem(r, c, item)
 
     # -------------------------------- التصدير --------------------------------
     def on_export_excel(self) -> None:

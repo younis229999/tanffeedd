@@ -12,7 +12,9 @@
 from __future__ import annotations
 
 import re
+from collections import Counter
 from dataclasses import dataclass
+from datetime import datetime
 from typing import List, Optional, Tuple
 
 # سنة منطقية معقولة لأرقام الأضابير.
@@ -131,68 +133,75 @@ def _smallest_available(year: str, used: set[str]) -> str:
     return f"{year}_{n}"
 
 
+def dominant_year(raw_folders: List[object]) -> str:
+    """السنة الأكثر تكراراً بين القيم الصحيحة (للتعبئة التلقائية)؛ وإلا السنة الحالية."""
+    years: List[str] = []
+    for raw in raw_folders:
+        y, _num, valid = parse_folder(raw)
+        if valid and y:
+            years.append(y)
+    if years:
+        return Counter(years).most_common(1)[0][0]
+    return str(datetime.now().year)
+
+
 def clean_and_dedupe(
     raw_folders: List[object],
     names: Optional[List[str]] = None,
+    year_for_fill: Optional[str] = None,
 ) -> Tuple[List[str], List[FolderChange]]:
     """
-    تنظيف قائمة أرقام أضابير وتفريدها داخل الملف الواحد.
+    تنظيف أرقام الأضابير وتفريدها، مع تعبئة الحقول الفارغة/غير الصالحة تلقائياً.
 
-    المعطيات:
-      raw_folders: القيم الخام بترتيب الصفوف.
-      names: أسماء المستفيدين (اختياري) لإثراء سجل التغييرات.
+    القواعد:
+      - القيمة الصحيحة (سنة + رقم) تُنظَّف إلى ``YYYY_NN``؛ وإذا تكررت يُعاد ترقيمها
+        بأصغر رقم متاح ضمن نفس سنتها.
+      - القيمة الفارغة أو غير الصالحة (بلا سنة، مثل ``8479798``) تُملأ تلقائياً
+        بالصيغة ``السنة_الرقم`` باستخدام السنة السائدة وأصغر رقم متاح.
 
-    تعيد:
-      (cleaned_folders, changes)
-      - cleaned_folders: القيم النهائية الفريدة بنفس ترتيب الإدخال.
-      - changes: قائمة بكل تغيير حصل (تنظيف غيّر الشكل، أو فك تكرار).
+    تعيد (folders, changes) بنفس ترتيب الإدخال.
     """
     if names is None:
         names = ["" for _ in raw_folders]
+    n = len(raw_folders)
+    fill_year = year_for_fill or dominant_year(raw_folders)
 
+    result: List[Optional[str]] = [None] * n
     used: set[str] = set()
-    result: List[str] = []
     changes: List[FolderChange] = []
+    pending: List[Tuple[int, str]] = []   # حقول تحتاج تعبئة تلقائية
 
+    def _name(i: int) -> str:
+        return names[i] if i < len(names) else ""
+
+    # المرحلة 1: القيم الصحيحة (سنة + رقم) — نثبّتها أولاً ونرصد الأرقام المستخدمة.
     for idx, raw in enumerate(raw_folders):
         old_display = "" if raw is None else str(raw).strip()
         cleaned, ok = clean_folder(raw)
+        if ok and "_" in cleaned:
+            reasons: List[str] = []
+            final = cleaned
+            if cleaned != old_display:
+                reasons.append("تنظيف الصيغة")
+            if final in used:
+                year, _num, _v = parse_folder(final)
+                final = _smallest_available(year or fill_year, used)
+                reasons.append("فك تكرار")
+            used.add(final)
+            result[idx] = final
+            if reasons and final != old_display:
+                changes.append(FolderChange(idx + 1, _name(idx), old_display, final,
+                                            " + ".join(reasons)))
+        else:
+            pending.append((idx, old_display))
 
-        reason_parts: List[str] = []
-        # هل غيّر التنظيف الشكل الظاهر؟
-        if cleaned != old_display:
-            reason_parts.append("تنظيف الصيغة")
-        if not ok:
-            reason_parts.append("تعذّر تحديد السنة — مراجعة مطلوبة")
-
-        final = cleaned
-        # فك التكرار: إن كان الشكل النهائي مستخدماً ولديه سنة معروفة.
-        if final and final in used:
-            year, _number, _year_ok = parse_folder(final)
-            if year and "_" in final:
-                final = _smallest_available(year, used)
-                reason_parts.append("فك تكرار")
-            else:
-                # سنة مجهولة — لا يمكن تفريدها بأمان؛ نضيف لاحقة فريدة بسيطة.
-                suffix = 1
-                base = final
-                while f"{base}#{suffix}" in used:
-                    suffix += 1
-                final = f"{base}#{suffix}"
-                reason_parts.append("فك تكرار (سنة مجهولة)")
-
+    # المرحلة 2: الحقول الفارغة/غير الصالحة → تعبئة تلقائية بالسنة السائدة.
+    for idx, old_display in pending:
+        final = _smallest_available(fill_year, used)
         used.add(final)
-        result.append(final)
+        result[idx] = final
+        reason = "تعبئة تلقائية (حقل فارغ)" if old_display == "" \
+            else "تعبئة تلقائية (قيمة بلا سنة)"
+        changes.append(FolderChange(idx + 1, _name(idx), old_display, final, reason))
 
-        if reason_parts and final != old_display:
-            changes.append(
-                FolderChange(
-                    row_index=idx + 1,
-                    name=names[idx] if idx < len(names) else "",
-                    old_value=old_display,
-                    new_value=final,
-                    reason=" + ".join(reason_parts),
-                )
-            )
-
-    return result, changes
+    return [r or "" for r in result], changes

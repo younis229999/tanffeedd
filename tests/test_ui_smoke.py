@@ -35,9 +35,9 @@ def main():
     assert win.stack.currentIndex() == 1, "لم تنتقل لشاشة النتائج"
 
     rv = win.results_view
-    assert rv.tab_merged.rowCount() == 7
+    # بقي تبويبان فقط: ملخص + تنبيهات (أُزيل «النتيجة بعد الدمج» و«تغييرات الأضابير»).
+    assert rv.tabs.count() == 2
     assert rv.tab_alerts.rowCount() >= 4
-    assert rv.tab_changes.rowCount() >= 9
     # تحقق تلوين خلية الخطورة.
     sev_item = rv.tab_alerts.item(0, 0)
     assert sev_item is not None and sev_item.background().color().isValid()

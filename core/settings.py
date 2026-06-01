@@ -31,6 +31,8 @@ DEFAULT_SETTINGS: Dict[str, Any] = {
         "iban": "I",
     },
     "has_header": True,
+    # هل يعالج البرنامج عمود رقم الإضبارة (A)؟ إن كان False يُترك كما هو.
+    "process_folders": True,
     "thresholds": {
         "amount_max": 10_000_000,
         "iban_length": 23,
@@ -172,6 +174,11 @@ class Settings:
     @property
     def has_header(self) -> bool:
         return bool(self.data.get("has_header", True))
+
+    @property
+    def process_folders(self) -> bool:
+        """هل يعالج البرنامج أرقام الأضابير (عمود A)؟"""
+        return bool(self.data.get("process_folders", True))
 
     @property
     def amount_max(self) -> float:

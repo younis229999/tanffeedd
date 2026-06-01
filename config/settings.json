@@ -9,6 +9,7 @@
     "iban": "I"
   },
   "has_header": true,
+  "process_folders": true,
   "thresholds": {
     "amount_max": 10000000,
     "iban_length": 23

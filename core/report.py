@@ -28,6 +28,7 @@ from reportlab.pdfbase.ttfonts import TTFont
 from reportlab.platypus import (
     BaseDocTemplate,
     Frame,
+    HRFlowable,
     PageTemplate,
     Paragraph,
     Spacer,
@@ -137,15 +138,11 @@ def _styles():
         ),
         "card_label": ParagraphStyle(
             "cl", fontName=_FONT_NAME, fontSize=11, alignment=TA_CENTER,
-            leading=15, textColor=colors.HexColor("#777777"),
-        ),
-        "card_value": ParagraphStyle(
-            "cv", fontName=_FONT_NAME, fontSize=19, alignment=TA_CENTER,
-            leading=24, textColor=colors.HexColor("#1F4E78"),
+            leading=15, textColor=colors.HexColor("#6B7280"),
         ),
         "item": ParagraphStyle(
             "it", fontName=_FONT_NAME, fontSize=11.5, alignment=TA_RIGHT,
-            leading=20, textColor=colors.HexColor("#222222"),
+            leading=18, textColor=colors.HexColor("#1F2937"),
         ),
         "empty": ParagraphStyle(
             "e", fontName=_FONT_NAME, fontSize=11, alignment=TA_CENTER,
@@ -155,41 +152,53 @@ def _styles():
 
 
 def _stats_cards(stats, st) -> Table:
-    """ثلاث بطاقات إحصائية في صف واحد (على نمط الصورة)."""
+    """ثلاث بطاقات إحصائية أنيقة بأشرطة لون علوية (على نمط الصورة)."""
     # الترتيب من اليسار لليمين ليطابق الصورة:
     # إجمالي المبالغ | عدد المكررات | إجمالي السجلات
     cards = [
-        ("إجمالي المبالغ", _fmt_amount(stats.total_amount)),
-        ("عدد المكررات", f"{stats.merged_away}"),
-        ("إجمالي السجلات", f"{stats.original_count}"),
+        ("إجمالي المبالغ", _fmt_amount(stats.total_amount), "#16A34A"),
+        ("عدد المكررات", f"{stats.merged_away}", "#E67E22"),
+        ("إجمالي السجلات", f"{stats.original_count}", "#2563EB"),
     ]
     row = []
-    for label, value in cards:
+    for label, value, accent in cards:
+        value_style = ParagraphStyle(
+            f"cv_{accent}", fontName=_FONT_NAME, fontSize=21, alignment=TA_CENTER,
+            leading=26, textColor=colors.HexColor(accent),
+        )
         cell = [
             Paragraph(ar(label), st["card_label"]),
             Spacer(1, 3 * mm),
-            Paragraph(ar(value), st["card_value"]),
+            Paragraph(ar(value), value_style),
         ]
         row.append(cell)
 
-    tbl = Table([row], colWidths=[60 * mm, 60 * mm, 60 * mm])
-    tbl.setStyle(TableStyle([
-        ("BACKGROUND", (0, 0), (-1, -1), colors.HexColor("#F4F7FB")),
-        ("BOX", (0, 0), (0, 0), 0.6, colors.HexColor("#D6E0EC")),
-        ("BOX", (1, 0), (1, 0), 0.6, colors.HexColor("#D6E0EC")),
-        ("BOX", (2, 0), (2, 0), 0.6, colors.HexColor("#D6E0EC")),
+    tbl = Table([row], colWidths=[58 * mm, 58 * mm, 58 * mm], hAlign="CENTER")
+    style = [
+        ("BACKGROUND", (0, 0), (-1, -1), colors.HexColor("#F7F9FC")),
         ("VALIGN", (0, 0), (-1, -1), "MIDDLE"),
-        ("TOPPADDING", (0, 0), (-1, -1), 12),
-        ("BOTTOMPADDING", (0, 0), (-1, -1), 12),
-        ("LEFTPADDING", (0, 0), (-1, -1), 8),
-        ("RIGHTPADDING", (0, 0), (-1, -1), 8),
-    ]))
+        ("TOPPADDING", (0, 0), (-1, -1), 14),
+        ("BOTTOMPADDING", (0, 0), (-1, -1), 14),
+        ("LEFTPADDING", (0, 0), (-1, -1), 6),
+        ("RIGHTPADDING", (0, 0), (-1, -1), 6),
+        # فاصل رفيع بين البطاقات.
+        ("LINEAFTER", (0, 0), (0, 0), 0.7, colors.HexColor("#E5EAF1")),
+        ("LINEAFTER", (1, 0), (1, 0), 0.7, colors.HexColor("#E5EAF1")),
+    ]
+    # شريط لون علوي مميّز لكل بطاقة.
+    for i, (_l, _v, accent) in enumerate(cards):
+        style.append(("LINEABOVE", (i, 0), (i, 0), 3, colors.HexColor(accent)))
+    tbl.setStyle(TableStyle(style))
     return tbl
 
 
 def _merged_items(final_rows, st) -> list:
     """قائمة «المعلومات»: المستفيدون المدموجون فقط (الاسم: مبلغ + مبلغ = الإجمالي)."""
     flow = [Paragraph(ar("المعلومات"), st["section"])]
+    # خط تحت عنوان القسم.
+    flow.append(HRFlowable(width="100%", thickness=1.2,
+                           color=colors.HexColor("#1F4E78"),
+                           spaceBefore=1, spaceAfter=6))
 
     merged = [r for r in final_rows if len(r.get("component_amounts", []) or []) > 1]
     if not merged:
@@ -202,7 +211,13 @@ def _merged_items(final_rows, st) -> list:
         total = row.get("amount", 0)
         breakdown = " + ".join(_fmt_amount(c) for c in comps)
         line = f"{i}- {name} : {breakdown} = {_fmt_amount(total)}"
+        flow.append(Spacer(1, 2.5 * mm))
         flow.append(Paragraph(ar(line), st["item"]))
+        flow.append(Spacer(1, 2.5 * mm))
+        # خط فاصل خفيف بين الأسطر.
+        flow.append(HRFlowable(width="100%", thickness=0.4,
+                               color=colors.HexColor("#E0E6EF"),
+                               spaceBefore=0, spaceAfter=0))
     return flow
 
 

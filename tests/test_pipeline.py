@@ -39,6 +39,10 @@ def make_sample(path):
         ["2025/81", "", "", "", 20000, "", "", "", "IQ77RAFB850123456789012"],
         # رقم إضبارة مكرر بعد التنظيف (سيتعارض مع 2025_80 أعلاه) -> فك تكرار
         ["إضبارة رقم 80 لسنة 2025", "", "", "", 12000, "", "", "حسين جابر", "IQ88RAFB850123456789012"],
+        # حقل إضبارة فارغ -> تعبئة تلقائية بالسنة السائدة (2025)
+        ["", "", "", "", 40000, "", "", "كرار عبد الرحمن محمد علي سعيد", "IQ11RAFB850123456789012"],
+        # رقم بلا سنة (8479798) -> يُحوَّل إلى السنة_الرقم
+        ["8479798", "", "", "", 25000, "", "", "نور الدين قاسم", "IQ22RAFB850123456789012"],
     ]
     for r in rows:
         ws.append(r)
@@ -94,12 +98,18 @@ def main():
     print(f"تم توليد PDF: {pdf_path} ({Path(pdf_path).stat().st_size} bytes)")
 
     # تحققات صريحة (assertions)
-    assert s.original_count == 9
+    assert s.original_count == 11
     merged_amount = next(r["amount"] for r in result.final_rows
                          if r["iban"] == "IQ98NBIQ850123456789012")
     assert merged_amount == 200000, merged_amount
     folders = [r["folder"] for r in result.final_rows]
+    assert all(f for f in folders), f"يوجد رقم إضبارة فارغ! {folders}"
     assert len(folders) == len(set(folders)), f"أرقام أضابير مكررة! {folders}"
+    assert all("_" in f for f in folders), f"يوجد رقم إضبارة بلا صيغة سنة_رقم! {folders}"
+    # تقصير الاسم الطويل إلى ثلاثي مع مراعاة المركّب (عبد الرحمن وحدة واحدة)
+    long_name = next(r["name"] for r in result.final_rows
+                     if r["iban"] == "IQ11RAFB850123456789012")
+    assert long_name == "كرار عبد الرحمن محمد", long_name
     assert wb.active.sheet_view.rightToLeft is False
     print("\n✅ كل التحققات نجحت.")
 
