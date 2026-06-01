@@ -10,6 +10,7 @@
   },
   "has_header": true,
   "process_folders": true,
+  "report_show_folder": true,
   "thresholds": {
     "amount_max": 10000000,
     "iban_length": 23

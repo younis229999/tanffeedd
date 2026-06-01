@@ -33,6 +33,8 @@ DEFAULT_SETTINGS: Dict[str, Any] = {
     "has_header": True,
     # هل يعالج البرنامج عمود رقم الإضبارة (A)؟ إن كان False يُترك كما هو.
     "process_folders": True,
+    # هل يُظهر التقرير رقم الإضبارة تحت كل مبلغ؟
+    "report_show_folder": True,
     "thresholds": {
         "amount_max": 10_000_000,
         "iban_length": 23,
@@ -179,6 +181,11 @@ class Settings:
     def process_folders(self) -> bool:
         """هل يعالج البرنامج أرقام الأضابير (عمود A)؟"""
         return bool(self.data.get("process_folders", True))
+
+    @property
+    def report_show_folder(self) -> bool:
+        """هل يُظهر التقرير رقم الإضبارة تحت كل مبلغ؟"""
+        return bool(self.data.get("report_show_folder", True))
 
     @property
     def amount_max(self) -> float:

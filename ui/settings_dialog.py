@@ -96,6 +96,10 @@ class SettingsDialog(QDialog):
             "تعديل أرقام الأضابير (عمود A) — تنظيف وتفريد وتعبئة الفارغ تلقائياً"
         )
         form.addRow("", self.chk_process_folders)
+
+        # إظهار رقم الإضبارة تحت كل مبلغ في التقرير.
+        self.chk_show_folder = QCheckBox("إظهار رقم الإضبارة تحت كل مبلغ في التقرير")
+        form.addRow("", self.chk_show_folder)
         return w
 
     def _tab_cancelled(self) -> QWidget:
@@ -155,6 +159,7 @@ class SettingsDialog(QDialog):
         self.chk_mod97.setChecked(s.iban_mod97_check)
         self.chk_header.setChecked(s.has_header)
         self.chk_process_folders.setChecked(s.process_folders)
+        self.chk_show_folder.setChecked(s.report_show_folder)
 
         self.list_cancelled.clear()
         self.list_cancelled.addItems(s.cancelled_ibans)
@@ -233,6 +238,7 @@ class SettingsDialog(QDialog):
         s.data["iban_mod97_check"] = self.chk_mod97.isChecked()
         s.data["has_header"] = self.chk_header.isChecked()
         s.data["process_folders"] = self.chk_process_folders.isChecked()
+        s.data["report_show_folder"] = self.chk_show_folder.isChecked()
 
         s.data["cancelled_ibans"] = [
             self.list_cancelled.item(i).text()

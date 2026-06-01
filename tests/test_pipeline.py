@@ -94,7 +94,8 @@ def main():
     print(f"\nExcel rightToLeft = {wb.active.sheet_view.rightToLeft} (المتوقع False)")
 
     pdf_path = build_report_filename(str(out_dir))
-    generate_report(result, pdf_path, settings.directorate_name, settings.report_footer_lines)
+    generate_report(result, pdf_path, settings.directorate_name, settings.report_footer_lines,
+                    show_folder=settings.report_show_folder)
     print(f"تم توليد PDF: {pdf_path} ({Path(pdf_path).stat().st_size} bytes)")
 
     # تحققات صريحة (assertions)

@@ -144,6 +144,10 @@ def _styles():
             "it", fontName=_FONT_NAME, fontSize=11.5, alignment=TA_RIGHT,
             leading=18, textColor=colors.HexColor("#1F2937"),
         ),
+        "item_sub": ParagraphStyle(
+            "isub", fontName=_FONT_NAME, fontSize=10, alignment=TA_RIGHT,
+            leading=15, textColor=colors.HexColor("#7A8699"), rightIndent=14,
+        ),
         "empty": ParagraphStyle(
             "e", fontName=_FONT_NAME, fontSize=11, alignment=TA_CENTER,
             leading=16, textColor=colors.grey, spaceBefore=8,
@@ -192,8 +196,11 @@ def _stats_cards(stats, st) -> Table:
     return tbl
 
 
-def _merged_items(final_rows, st) -> list:
-    """قائمة «المعلومات»: المستفيدون المدموجون فقط (الاسم: مبلغ + مبلغ = الإجمالي)."""
+def _merged_items(final_rows, st, show_folder: bool = True) -> list:
+    """
+    قائمة «المعلومات»: المستفيدون المدموجون فقط.
+    كل عنصر: (الاسم: مبلغ + مبلغ = الإجمالي)، وتحته رقم الإضبارة إن كان مُفعّلاً.
+    """
     flow = [Paragraph(ar("المعلومات"), st["section"])]
     # خط تحت عنوان القسم.
     flow.append(HRFlowable(width="100%", thickness=1.2,
@@ -213,6 +220,9 @@ def _merged_items(final_rows, st) -> list:
         line = f"{i}- {name} : {breakdown} = {_fmt_amount(total)}"
         flow.append(Spacer(1, 2.5 * mm))
         flow.append(Paragraph(ar(line), st["item"]))
+        if show_folder:
+            folder = row.get("folder", "")
+            flow.append(Paragraph(ar(f"رقم الإضبارة: {folder}"), st["item_sub"]))
         flow.append(Spacer(1, 2.5 * mm))
         # خط فاصل خفيف بين الأسطر.
         flow.append(HRFlowable(width="100%", thickness=0.4,
@@ -226,6 +236,7 @@ def generate_report(
     out_path: str,
     directorate_name: str,
     footer_lines: List[str],
+    show_folder: bool = True,
 ) -> str:
     """توليد تقرير PDF مبسّط من نتيجة المعالجة."""
     ensure_font()
@@ -250,7 +261,7 @@ def generate_report(
     flow.append(Spacer(1, 4 * mm))
     flow.append(_stats_cards(result.stats, st))
     flow.append(Spacer(1, 8 * mm))
-    flow.extend(_merged_items(result.final_rows, st))
+    flow.extend(_merged_items(result.final_rows, st, show_folder=show_folder))
 
     doc.build(flow)
     return out_path
