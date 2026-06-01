@@ -161,6 +161,11 @@ class Settings:
         return [self.directorate_name, self.section_name, self.programmer_name]
 
     @property
+    def report_footer_lines(self) -> List[str]:
+        """تذييل التقرير (PDF) — بدون اسم المبرمج إطلاقاً."""
+        return [self.directorate_name, self.section_name]
+
+    @property
     def columns(self) -> Dict[str, str]:
         return dict(self.data.get("columns", {}))
 

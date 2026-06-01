@@ -18,6 +18,7 @@ from typing import Dict, List
 from .excel_loader import LoadedData, load_excel, parse_amount
 from .folder_number import FolderChange, clean_and_dedupe, clean_folder
 from .merger import MergeResult, NameConflict, merge_by_iban
+from .names import shorten_name
 from .settings import Settings
 from .validator import Alert, Severity, validate_rows
 
@@ -102,7 +103,8 @@ def process_loaded(data: LoadedData, settings: Settings) -> ProcessResult:
                 "row_index": i + 1,
                 "folder": final_folders[i],
                 "amount": row.total_amount,
-                "name": row.name,
+                # تقصير الاسم الطويل إلى ثلاثي (المصارف لا تقبل الأسماء الطويلة).
+                "name": shorten_name(row.name),
                 "iban": row.iban,
                 "component_amounts": row.component_amounts,
                 "source_rows": row.source_rows,

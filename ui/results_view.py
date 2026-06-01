@@ -298,7 +298,7 @@ class ResultsView(QWidget):
         try:
             generate_report(
                 self.result, path,
-                self.settings.directorate_name, self.settings.footer_lines,
+                self.settings.directorate_name, self.settings.report_footer_lines,
             )
         except Exception as exc:  # noqa: BLE001
             QMessageBox.critical(self, "خطأ", f"تعذّر إنشاء التقرير:\n{exc}")

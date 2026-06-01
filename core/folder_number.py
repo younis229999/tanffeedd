@@ -84,13 +84,12 @@ def parse_folder(raw: object) -> Tuple[Optional[str], Optional[str], bool]:
 
     if year_idx is not None:
         year = runs[year_idx]
-        # الرقم = بقية المجموعات (بالترتيب) مدموجة.
+        # الرقم = أول مجموعة أرقام غير السنة (نتجاهل التكرار، نحتفظ برقم واحد).
         rest = runs[:year_idx] + runs[year_idx + 1:]
-        number = "".join(rest) if rest else ""
-        if number == "":
+        if not rest:
             # سنة فقط دون رقم — نعتبره ناقصاً.
             return year, None, False
-        return year, _normalize_number(number), True
+        return year, _normalize_number(rest[0]), True
 
     # لا توجد مجموعة من 4 خانات: حالة مجموعة واحدة طويلة مثل 202565.
     joined = "".join(runs)
@@ -104,13 +103,13 @@ def parse_folder(raw: object) -> Tuple[Optional[str], Optional[str], bool]:
 
 
 def build_folder(year: Optional[str], number: Optional[str]) -> str:
-    """بناء النص النهائي ``YYYY_NN``. عند نقص السنة نستخدم بادئة فارغة واضحة."""
+    """بناء النص النهائي ``YYYY_NN`` (السنة_الرقم فقط، بلا بادئات)."""
     if year and number:
         return f"{year}_{number}"
     if number:
-        return f"____{number}"   # سنة مجهولة — علامة بصرية تستدعي المراجعة.
+        return number          # سنة مجهولة — نعرض الرقم فقط دون أي بادئة.
     if year:
-        return f"{year}_"
+        return year
     return ""
 
 
@@ -169,8 +168,8 @@ def clean_and_dedupe(
         final = cleaned
         # فك التكرار: إن كان الشكل النهائي مستخدماً ولديه سنة معروفة.
         if final and final in used:
-            year, _number, year_ok = parse_folder(final)
-            if year and year_ok is not None and "_" in final and not final.startswith("____"):
+            year, _number, _year_ok = parse_folder(final)
+            if year and "_" in final:
                 final = _smallest_available(year, used)
                 reason_parts.append("فك تكرار")
             else:

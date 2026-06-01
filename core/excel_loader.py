@@ -211,7 +211,7 @@ def write_output_excel(
         ws.cell(row=r_i, column=1, value=row.get("folder", ""))
         amount = row.get("amount", 0)
         amt_cell = ws.cell(row=r_i, column=2, value=amount)
-        amt_cell.number_format = "#,##0"
+        amt_cell.number_format = "0"   # بدون فواصل آلاف.
         ws.cell(row=r_i, column=3, value=row.get("name", ""))
         ws.cell(row=r_i, column=4, value=row.get("iban", ""))
 
