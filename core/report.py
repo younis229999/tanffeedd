@@ -29,6 +29,7 @@ from reportlab.platypus import (
     BaseDocTemplate,
     Frame,
     HRFlowable,
+    Image,
     PageTemplate,
     Paragraph,
     Spacer,
@@ -43,6 +44,32 @@ _font_registered = False
 
 def _assets_font_path() -> Path:
     return Path(__file__).resolve().parent.parent / "assets" / "fonts" / "Amiri.ttf"
+
+
+def _logo_path() -> Path:
+    """مسار الشعار (يصلح للتطوير والتغليف)."""
+    import sys
+    if getattr(sys, "frozen", False):
+        base = Path(getattr(sys, "_MEIPASS", Path(__file__).resolve().parent.parent))
+    else:
+        base = Path(__file__).resolve().parent.parent
+    return base / "assets" / "images" / "logo.jpg"
+
+
+def _logo_flowable(width_mm: float = 22):
+    """صورة الشعار كعنصر تدفّق متمركز، أو None إن لم تتوفّر."""
+    p = _logo_path()
+    if not p.exists():
+        return None
+    try:
+        img = Image(str(p))
+        ratio = img.imageHeight / float(img.imageWidth)
+        img.drawWidth = width_mm * mm
+        img.drawHeight = width_mm * mm * ratio
+        img.hAlign = "CENTER"
+        return img
+    except Exception:  # noqa: BLE001
+        return None
 
 
 def ensure_font() -> str:
@@ -263,6 +290,10 @@ def generate_report(
     )
 
     flow = []
+    logo = _logo_flowable()
+    if logo is not None:
+        flow.append(logo)
+        flow.append(Spacer(1, 3 * mm))
     flow.append(Paragraph(ar(directorate_name), st["title"]))
     flow.append(Paragraph(ar("دمج المكررات"), st["subtitle"]))
     flow.append(Paragraph(ar(datetime.now().strftime("%Y-%m-%d")), st["date"]))
@@ -307,6 +338,10 @@ def generate_statement_pdf(
     )
 
     flow = []
+    logo = _logo_flowable()
+    if logo is not None:
+        flow.append(logo)
+        flow.append(Spacer(1, 3 * mm))
     flow.append(Paragraph(ar(directorate_name), st["title"]))
     flow.append(Paragraph(ar("كشف حساب المستفيد"), st["subtitle"]))
     flow.append(Paragraph(ar(datetime.now().strftime("%Y-%m-%d")), st["date"]))

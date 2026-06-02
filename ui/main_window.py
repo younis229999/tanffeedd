@@ -32,7 +32,7 @@ from core.settings import Settings
 from ui.results_view import ResultsView
 from ui.search_view import SearchView
 from ui.settings_dialog import SettingsDialog
-from ui.theme import C, make_card
+from ui.theme import C, asset_path, make_card
 
 
 class MainWindow(QWidget):
@@ -82,8 +82,17 @@ class MainWindow(QWidget):
         add_shadow(card, blur=30, y=8, alpha=55)
 
         lay = QHBoxLayout(card)
-        lay.setContentsMargins(24, 14, 24, 14)
-        lay.setSpacing(16)
+        lay.setContentsMargins(24, 12, 24, 12)
+        lay.setSpacing(14)
+
+        # الشعار (أقصى اليمين في RTL).
+        logo = asset_path("assets", "images", "logo.jpg")
+        if logo.exists():
+            from PySide6.QtGui import QPixmap
+            pix = QPixmap(str(logo)).scaledToHeight(58, Qt.SmoothTransformation)
+            logo_lbl = QLabel()
+            logo_lbl.setPixmap(pix)
+            lay.addWidget(logo_lbl)
 
         # العنوان (يمين في RTL).
         titles = QVBoxLayout()
@@ -194,14 +203,14 @@ class MainWindow(QWidget):
             self.loaded = load_excel(path, self.settings.columns, self.settings.has_header)
         except ExcelLoadError as exc:
             QMessageBox.critical(self, "خطأ في قراءة الملف", str(exc))
-            self.logger.error("فشل تحميل الملف: %s", exc)
+            self.logger.error("فشل تحميل الملف")
             return
 
         self.lbl_file.setText(f"📄 {Path(path).name}   •   {len(self.loaded)} صف")
         self._fill_preview(self.loaded)
         self.btn_process.setEnabled(True)
         self.stack.setCurrentIndex(0)
-        self.logger.info("تم تحميل الملف %s (%d صف)", path, len(self.loaded))
+        self.logger.info("تم تحميل ملف للمعالجة (%d صف)", len(self.loaded))
 
     def _fill_preview(self, data: LoadedData) -> None:
         rows = data.as_rows()

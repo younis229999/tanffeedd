@@ -158,9 +158,8 @@ class LedgerStore:
         return column_index_from_string(str(letter).strip().upper()) - 1
 
     def _parse(self, path: Path) -> None:
-        raw = pd.read_excel(path, header=None, dtype=object, engine="openpyxl")
-        if self.settings.has_header and len(raw) > 0:
-            raw = raw.iloc[1:].reset_index(drop=True)
+        # قراءة متدفقة سريعة (read_only) — تقرأ آلاف الأسطر بسرعة وبذاكرة قليلة.
+        from openpyxl import load_workbook
 
         ci = {
             "folder": self._col("folder", "A"),
@@ -169,41 +168,55 @@ class LedgerStore:
             "iban": self._col("iban", "I"),
             "date": self._col("date", "B"),
         }
-        max_needed = max(ci.values())
+        i_folder, i_amount = ci["folder"], ci["amount"]
+        i_name, i_iban, i_date = ci["name"], ci["iban"], ci["date"]
 
         groups: Dict[str, Person] = {}
         order: List[str] = []
         count = 0
 
-        for _, row in raw.iterrows():
-            if raw.shape[1] <= max_needed:
-                break
-            name = _txt(row.iloc[ci["name"]])
-            iban = _txt(row.iloc[ci["iban"]]).replace(" ", "").upper()
-            folder = _txt(row.iloc[ci["folder"]])
-            amount = parse_amount(row.iloc[ci["amount"]]) or 0.0
-            date_fmt, date_key = format_date(row.iloc[ci["date"]])
+        wb = load_workbook(path, read_only=True, data_only=True)
+        try:
+            ws = wb.active
+            rows_iter = ws.iter_rows(values_only=True)
+            if self.settings.has_header:
+                next(rows_iter, None)   # تخطّي صف العنوان.
 
-            if not name and not iban:
-                continue
-            count += 1
+            for row in rows_iter:
+                if row is None:
+                    continue
+                rn = len(row)
 
-            key = iban if iban else f"__name__{normalize_ar(name)}"
-            person = groups.get(key)
-            if person is None:
-                person = Person(name=name, iban=iban, folder=folder)
-                groups[key] = person
-                order.append(key)
-            person.entries.append(
-                LedgerEntry(date_raw=_txt(row.iloc[ci["date"]]),
-                            date_key=date_key, date_fmt=date_fmt, amount=amount,
-                            folder=folder)
-            )
-            if name and name not in person.name_variants:
-                person.name_variants.append(name)
-                # نختار أطول اسم كاسم كامل للعرض.
-                if len(name) > len(person.name):
-                    person.name = name
+                def cell(i: int):
+                    return row[i] if i < rn else None
+
+                name = _txt(cell(i_name))
+                iban = _txt(cell(i_iban)).replace(" ", "").upper()
+                if not name and not iban:
+                    continue
+
+                folder = _txt(cell(i_folder))
+                amount = parse_amount(cell(i_amount)) or 0.0
+                date_raw = cell(i_date)
+                date_fmt, date_key = format_date(date_raw)
+                count += 1
+
+                key = iban if iban else f"__name__{normalize_ar(name)}"
+                person = groups.get(key)
+                if person is None:
+                    person = Person(name=name, iban=iban, folder=folder)
+                    groups[key] = person
+                    order.append(key)
+                person.entries.append(
+                    LedgerEntry(date_raw=_txt(date_raw), date_key=date_key,
+                                date_fmt=date_fmt, amount=amount, folder=folder)
+                )
+                if name and name not in person.name_variants:
+                    person.name_variants.append(name)
+                    if len(name) > len(person.name):
+                        person.name = name
+        finally:
+            wb.close()
 
         # ترتيب العمليات تنازلياً (الأحدث أولاً) وحساب التطبيع للبحث.
         for key in order:

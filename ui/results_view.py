@@ -228,7 +228,7 @@ class ResultsView(QWidget):
         except Exception as exc:  # noqa: BLE001
             QMessageBox.critical(self, "خطأ", f"تعذّر حفظ الملف:\n{exc}")
             return
-        self.logger.info("تم حفظ Excel: %s", path)
+        self.logger.info("تم حفظ ملف Excel الناتج")
         QMessageBox.information(self, "تم", f"تم حفظ الملف:\n{path}")
 
     def on_export_pdf(self) -> None:
@@ -249,5 +249,5 @@ class ResultsView(QWidget):
         except Exception as exc:  # noqa: BLE001
             QMessageBox.critical(self, "خطأ", f"تعذّر إنشاء التقرير:\n{exc}")
             return
-        self.logger.info("تم تصدير PDF: %s", path)
+        self.logger.info("تم تصدير تقرير PDF")
         QMessageBox.information(self, "تم", f"تم إنشاء التقرير:\n{path}")

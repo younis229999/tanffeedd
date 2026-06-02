@@ -39,7 +39,7 @@ from core.logger import get_logger
 from core.report import generate_statement_pdf
 from core.settings import Settings
 from ui.ledger_dialog import LedgerDialog
-from ui.printing import print_pdf_file
+from ui.printing import preview_and_print_pdf
 from ui.theme import C, make_card
 
 _LRM = "‎"
@@ -178,7 +178,7 @@ class SearchView(QWidget):
         self.date_until.dateChanged.connect(self._refresh_statement)
         ctrl.addWidget(self.date_until)
         ctrl.addStretch(1)
-        self.btn_print = QPushButton("🖨  طباعة مباشرة")
+        self.btn_print = QPushButton("🖨  معاينة وطباعة")
         self.btn_print.setCursor(Qt.PointingHandCursor)
         self.btn_print.setEnabled(False)
         self.btn_print.clicked.connect(self.on_print_direct)
@@ -327,7 +327,7 @@ class SearchView(QWidget):
         except Exception as exc:  # noqa: BLE001
             QMessageBox.critical(self, "خطأ", f"تعذّر إنشاء الكشف:\n{exc}")
             return
-        self.logger.info("تم حفظ كشف: %s", path)
+        self.logger.info("تم حفظ كشف PDF")
         QMessageBox.information(self, "تم", f"تم حفظ الكشف:\n{path}")
 
     def on_print_direct(self) -> None:
@@ -341,7 +341,7 @@ class SearchView(QWidget):
             tmp.close()
             tmp_path = tmp.name
             self._make_statement_pdf(tmp_path)
-            printed = print_pdf_file(tmp_path, self)
+            preview_and_print_pdf(tmp_path, self)
         except Exception as exc:  # noqa: BLE001
             QMessageBox.critical(self, "خطأ", f"تعذّر الطباعة:\n{exc}")
             return
@@ -351,5 +351,5 @@ class SearchView(QWidget):
                     Path(tmp_path).unlink(missing_ok=True)
                 except Exception:  # noqa: BLE001
                     pass
-        if printed:
-            self.logger.info("تمت طباعة كشف مباشرة: %s", self.current.name)
+        # لا نسجّل أسماء/بيانات المستفيدين في السجل (خصوصية).
+        self.logger.info("تمت معاينة/طباعة كشف")

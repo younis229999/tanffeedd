@@ -7,6 +7,9 @@
 
 from __future__ import annotations
 
+import sys
+from pathlib import Path
+
 from PySide6.QtCore import Qt
 from PySide6.QtGui import QColor, QFont
 from PySide6.QtWidgets import (
@@ -35,6 +38,15 @@ class C:
     WARNING = "#F59E0B"
     INFO = "#0EA5E9"
     ALT_ROW = "#F7F9FC"       # تظليل صفوف الجدول المتناوب
+
+
+def asset_path(*parts: str) -> Path:
+    """مسار ملف ضمن المشروع/الحزمة (يصلح للتطوير والتغليف)."""
+    if getattr(sys, "frozen", False):
+        base = Path(getattr(sys, "_MEIPASS", Path(__file__).resolve().parent.parent))
+    else:
+        base = Path(__file__).resolve().parent.parent
+    return base.joinpath(*parts)
 
 
 def add_shadow(widget: QWidget, blur: int = 28, y: int = 6, alpha: int = 38) -> None:
