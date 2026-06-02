@@ -148,6 +148,19 @@ def load_excel(path: str, columns: Dict[str, str], has_header: bool = True) -> L
     return data
 
 
+def safe_cell_text(value: object) -> str:
+    """
+    تحصين ضد حقن صيغ Excel (Formula/CSV Injection).
+
+    إذا بدأت القيمة النصية بأحد الرموز التي قد يفسّرها Excel كصيغة تنفيذية
+    (= + - @ أو فاصل/سطر جديد)، نُسبقها بفاصلة عُليا ' لتُعامَل كنص آمن فقط.
+    """
+    text = "" if value is None else str(value)
+    if text and text[0] in ("=", "+", "-", "@", "\t", "\r", "\n"):
+        return "'" + text
+    return text
+
+
 def parse_amount(value: object) -> Optional[float]:
     """
     تحويل قيمة مبلغ إلى رقم.
@@ -206,14 +219,14 @@ def write_output_excel(
         cell.font = header_font
         cell.alignment = center
 
-    # الصفوف.
+    # الصفوف (مع تحصين الخلايا النصية ضد حقن الصيغ).
     for r_i, row in enumerate(rows, start=2):
-        ws.cell(row=r_i, column=1, value=row.get("folder", ""))
+        ws.cell(row=r_i, column=1, value=safe_cell_text(row.get("folder", "")))
         amount = row.get("amount", 0)
         amt_cell = ws.cell(row=r_i, column=2, value=amount)
         amt_cell.number_format = "0"   # بدون فواصل آلاف.
-        ws.cell(row=r_i, column=3, value=row.get("name", ""))
-        ws.cell(row=r_i, column=4, value=row.get("iban", ""))
+        ws.cell(row=r_i, column=3, value=safe_cell_text(row.get("name", "")))
+        ws.cell(row=r_i, column=4, value=safe_cell_text(row.get("iban", "")))
 
     # ضبط عرض الأعمدة.
     widths = {1: 16, 2: 16, 3: 32, 4: 30}
